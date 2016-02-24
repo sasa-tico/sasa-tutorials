@@ -1,0 +1,887 @@
+<?php
+class Articles{
+
+	public $count;
+	//Constructor
+	public function __construct(pgsql $con) {
+        $this->con = $con;
+		//Default vrednosti
+		$this->grupa_pr_id = -1;
+    }
+
+    //Treba da napisemo i destructor, najverovatnije sa NULL - ISPROBATI!!!
+    public function __destruct(){
+    	$this->con = NULL;
+    }
+
+    //Vraca listu proizvoda kroz array
+    public function articlesList(){
+    	//Grupa
+        if(isset($_GET['grupa_pr_id'])){
+			$sub_groups = new Misc($this->con);
+			$sub_groups_list = $sub_groups->miscGetSubgroups($_GET['grupa_pr_id']);	
+            $dodatne_grupe = " OR r.roba_id IN(SELECT rg.roba_id FROM roba_grupe rg WHERE rg.grupa_pr_id IN((select gp.grupa_pr_id from grupa_pr gp, connectby('grupa_pr', 'grupa_pr_id','parrent_grupa_pr_id', 'grupa', '".$_GET['grupa_pr_id']."',  0) as t(id int, p_id int, lv int, pos int) WHERE gp.grupa_pr_id = id))) ";
+			$uslov_kategorija = " AND (r.grupa_pr_id IN(".$sub_groups_list.") ".$dodatne_grupe.")  AND ".$_GET['grupa_pr_id']."=$1 ";								          
+        }else{
+            $uslov_kategorija = " AND -1=$1"; 
+        };
+
+        if($_SESSION['proizvodjac_id']<>""){
+            if($_SESSION['proizvodjac_id']<>"-1"){
+                $uslov_proizvodjac = " AND r.proizvodjac_id IN(".$_SESSION['proizvodjac_id'].") ";
+            }else{
+                $uslov_proizvodjac = " ";    
+            }            
+        }else{
+            $uslov_proizvodjac = " "; 
+        };
+
+        if($_SESSION['vrednosti']<>""){
+            if($_SESSION['vrednosti']<>"-1"){
+                $uslov_vrednosti = " AND r.roba_id IN(SELECT roba_id FROM web_roba_karakteristike WHERE grupa_pr_vrednost_id IN (".$_SESSION['vrednosti'].")) ";
+            }else{
+                $uslov_vrednosti = " ";    
+            }            
+        }else{
+            $uslov_vrednosti = " "; 
+        };
+
+        if(isset($_GET['pretraga'])){
+        	$pretraga = new Misc($this->con);
+        	$uslov_pretraga = $pretraga->miscSearch($_GET['pretraga']);	
+        }else{
+        	$uslov_pretraga = " ";
+        }
+
+
+        if($_SESSION['articles_current_min_value']<>"0"){
+            $uslov_cena_od = " AND r.".$_SESSION['vrsta_cene']." >= ".$_SESSION['articles_current_min_value'];
+        }else{
+            //$uslov_cena_od = " "; 
+        }
+
+        if($_SESSION['articles_current_max_value']<>"0"){
+            $uslov_cena_do = " AND r.".$_SESSION['vrsta_cene']." <= ".$_SESSION['articles_current_max_value'];
+        }else{
+            $uslov_cena_od = " "; 
+        }
+        
+
+         if(isset($_SESSION['sort_lista_robe']) and $_SESSION['akcija']==""){
+            switch($_SESSION['sort_lista_robe']){
+    		  //Cena opadajuce
+    		  case "price_desc":
+    			     $uslov_order = " ORDER BY r.web_cena DESC ";
+    		  break;
+    		  //Cena rastuce
+    		  case "price_asc":
+    			$uslov_order = " ORDER BY r.web_cena ASC ";
+    		  break;
+    		  //Najnoviji
+    		  case "newest":
+    			$uslov_order = " ORDER BY r.roba_id DESC ";
+    		  break;
+              //Najpregledaniji
+              case "most_viewed":
+                $uslov_order = " ORDER BY r.pregledan_puta DESC ";
+              break;
+			  case "akcije":
+                $uslov_order = " ORDER BY r.akcija_redni_broj ASC ";
+              break;
+    		  //Default
+    		  default:
+    			$uslov_order = " ORDER BY r.web_cena ASC ";
+    		  break;
+    	   }            
+        }
+		else if(isset($_SESSION['sort_lista_robe']) and $_SESSION['akcija']=="1"){
+    	   //Default
+            $uslov_order = " ORDER BY r.akcija_redni_broj ASC "; 
+        }
+		else {
+			$uslov_order = " ORDER BY r.web_cena DESC ";
+		}
+
+
+		if(isset($_SESSION['max_lista_robe'])){
+			$uslov_limit = " LIMIT ".$_SESSION['max_lista_robe'];
+		}else{
+			$uslov_limit = " ";
+		}
+
+		if(!isset($_SESSION['page_lista_robe'])){
+			$uslov_offset = " OFFSET 0 ";	
+		}else{
+			$uslov_offset = " OFFSET ".(($_SESSION['page_lista_robe']-1)*$_SESSION['max_lista_robe']);
+		}			
+
+		if($_SESSION['akcija']=="1"){
+			$uslov_akcija = " AND r.akcija_flag_primeni = 1 AND r.akcija_redni_broj IN (1,2,3,4,5,6,7,8,9,10,11,12) ";
+			$uslov_limit = " LIMIT ".$_SESSION['max_specials'];
+		}else{
+			$uslov_akcija = " ";	
+			$uslov_limit = " LIMIT ".$_SESSION['max_lista_robe'];
+		}
+
+		if($_SESSION['bez_opisa']=="1"){$uslov_opis = "";}else{$uslov_opis = " AND r.web_opis <> '' ";};
+		if($_SESSION['bez_karakteristika']=='1'){$uslov_karakteristike = "";}else{$uslov_karakteristike = " AND karakt_exist(r.roba_id, r.web_flag_karakteristike) = 'DA' ";};
+		if($_SESSION['bez_webcene']=='1'){$uslov_web_cena = "";}else{$uslov_web_cena = " AND (r.web_cena <> 0.00) AND (r.web_cena IS NOT NULL) ";};
+		if($_SESSION['bez_slike']=='1'){$uslov_slika = "";}else{$uslov_slika = " AND (ws.web_slika_id IS NOT NULL AND ws.flag_prikazi = 1) ";};
+
+    	$sql = "SELECT r.roba_id,r.web_flag_karakteristike, r.akcijska_cena, r.web_vrsta_prikaza, r.akcija_flag_primeni, r.akcija_popust, r.proizvodjac_id,r.naziv_web,r.".$_SESSION['vrsta_cene'].",ws.web_slika_id,ws.slika,ws.putanja,ws.alt FROM roba r "
+		." LEFT JOIN (SELECT roba_id,web_slika_id,flag_prikazi,putanja,alt,regexp_replace(putanja, '.+/', '') AS slika FROM web_slika WHERE akcija = 1 GROUP BY roba_id, web_slika_id,flag_prikazi,putanja,alt) ws ON r.roba_id = ws.roba_id "
+		." LEFT JOIN (SELECT (sum(kolicina) - sum(rezervisano)) AS lager, roba_id FROM lager WHERE orgj_id IN (".$_SESSION['magacin'].")AND poslovna_godina_id = ".$_SESSION['godina']." GROUP BY roba_id) l ON l.roba_id = r.roba_id "
+		." WHERE r.roba_id <> -1 AND r.flag_aktivan = 1 AND r.flag_prikazi_u_cenovniku = 1 AND (l.lager > r.web_minimalna_kolicina OR r.web_flag_obavezan_prikaz = 1) " 
+		.$uslov_opis
+		.$uslov_karakteristike
+		.$uslov_web_cena
+		.$uslov_slika
+        .$uslov_kategorija
+        .$uslov_proizvodjac
+        .$uslov_pretraga
+        .$uslov_akcija
+        .$uslov_vrednosti;
+			if(isset($_GET['grupa_pr_id'])){
+		$grupa_pr_id_rade=$_GET['grupa_pr_id'];
+		}
+		else {
+		$grupa_pr_id_rade=-1;
+		}
+		$uslovi_array = array($grupa_pr_id_rade);
+		$this->con->query($sql,"artikli_count",$uslovi_array);
+        //echo $sql;
+        
+		//$this->count = $this->con->numRows();
+
+        //Min i max vrednosti
+        $first_ret = array();
+        while($rowCart = $this->con->fetchArray()){
+            $first_ret[]=$rowCart;
+        };
+
+        //Proba proizvodjac
+        $zarez = '';
+        $proizvodjaci = '';
+        foreach($first_ret as $proizvodjac){
+            $proizvodjaci .= $zarez.$proizvodjac['proizvodjac_id'];
+            $zarez = ',';
+        }
+        $this->proizvodjaci = implode(',',array_unique(explode(',', $proizvodjaci)));
+        //End proba proizvodjac
+
+        $numbers = array_map(function($first_ret) {return $first_ret[$_SESSION['vrsta_cene']];}, $first_ret);
+        $_SESSION['articles_min_value'] = (int)min($numbers)-1;
+        $_SESSION['articles_max_value'] = (int)max($numbers)+1;
+
+        //Brojim artikle
+        $sqlCount = $sql.$uslov_cena_od.$uslov_cena_do.$uslov_order;
+        $this->con->query($sqlCount,"count_article_row",$uslovi_array);
+        $this->count = $this->con->numRows();
+
+        //Pustam drugi upit prema cene,order,limit i offset 
+		$sql = $sql.$uslov_cena_od.$uslov_cena_do.$uslov_order.$uslov_limit.$uslov_offset;
+        //echo $sql;
+    	$this->con->query($sql,"artikli_lista",$uslovi_array);
+
+
+    	//Storniraj pretragu posle ovoga
+    	$_SESSION['search_lista_robe'] = "";
+    	$second_ret = array();
+    	while($rowCart = $this->con->fetchArray()){
+    		$second_ret[]=$rowCart;
+    	};        
+    	return $second_ret;   	
+
+    }
+
+    //Vraca preporucene proizvode
+    public function articlesRecomended($roba_id,$grupa_pr_id,$limit){
+        if($_SESSION['bez_opisa']=="1"){$uslov_opis = "";}else{$uslov_opis = " AND r.web_opis <> '' ";};
+        if($_SESSION['bez_karakteristika']=='1'){$uslov_karakteristike = "";}else{$uslov_karakteristike = " AND karakt_exist(r.roba_id, r.web_flag_karakteristike) = 'DA' ";};
+        if($_SESSION['bez_webcene']=='1'){$uslov_web_cena = "";}else{$uslov_web_cena = " AND (r.web_cena <> 0.00) AND (r.web_cena IS NOT NULL) ";};
+        if($_SESSION['bez_slike']=='1'){$uslov_slika = "";}else{$uslov_slika = " AND (ws.web_slika_id IS NOT NULL AND ws.flag_prikazi = 1) ";};
+
+        $sub_groups = new Misc($this->con);
+        $sub_groups_list = $sub_groups->miscGetSubgroups($grupa_pr_id); 
+
+        $sql = "SELECT r.roba_id,r.naziv_web, r.akcija_flag_primeni, r.akcijska_cena, r.akcija_popust, r.web_cena,r.".$_SESSION['vrsta_cene'].",ws.web_slika_id,ws.slika,ws.putanja,ws.alt FROM roba r "
+        ." LEFT JOIN (SELECT roba_id,web_slika_id,flag_prikazi,putanja,alt,regexp_replace(putanja, '.+/', '') AS slika FROM web_slika WHERE akcija = 1 GROUP BY roba_id, web_slika_id,flag_prikazi,putanja,alt) ws ON r.roba_id = ws.roba_id "
+        ." LEFT JOIN (SELECT (sum(kolicina) - sum(rezervisano)) AS lager, roba_id FROM lager WHERE orgj_id IN (".$_SESSION['magacin'].")AND poslovna_godina_id = ".$_SESSION['godina']." GROUP BY roba_id) l ON l.roba_id = r.roba_id "
+        ." WHERE r.roba_id <> -1 AND r.flag_aktivan = 1 AND r.flag_prikazi_u_cenovniku = 1 AND (l.lager > r.web_minimalna_kolicina OR r.web_flag_obavezan_prikaz = 1) "
+        //." AND r.roba_id <> ".$roba_id
+        ." AND r.grupa_pr_id IN(".$sub_groups_list.") "
+        .$uslov_opis
+        .$uslov_karakteristike
+        .$uslov_web_cena
+        .$uslov_slika
+        ." ORDER BY r.pregledan_puta DESC LIMIT ".$limit;
+        //echo $sql;
+        $this->con->query($sql,"artikli_recomended",array());   
+        $ret = array();
+        while($rowCart = $this->con->fetchArray()){
+            $ret[]=$rowCart;
+        };
+        return $ret;
+    }
+
+
+    //Vraca izdvojene proizvode
+    public function articlesTypes($limit,$tip){
+        if($_SESSION['bez_opisa']=="1"){$uslov_opis = "";}else{$uslov_opis = " AND r.web_opis <> '' ";};
+        if($_SESSION['bez_karakteristika']=='1'){$uslov_karakteristike = "";}else{$uslov_karakteristike = " AND karakt_exist(r.roba_id, r.web_flag_karakteristike) = 'DA' ";};
+        if($_SESSION['bez_webcene']=='1'){$uslov_web_cena = "";}else{$uslov_web_cena = " AND (r.web_cena <> 0.00) AND (r.web_cena IS NOT NULL) ";};
+        if($_SESSION['bez_slike']=='1'){$uslov_slika = "";}else{$uslov_slika = " AND (ws.web_slika_id IS NOT NULL AND ws.flag_prikazi = 1) ";};
+
+        $sql = "SELECT r.roba_id,r.naziv_web,r.".$_SESSION['vrsta_cene'].",ws.web_slika_id,ws.slika,ws.putanja,ws.alt FROM roba r "
+        ." LEFT JOIN (SELECT roba_id,web_slika_id,flag_prikazi,putanja,alt,regexp_replace(putanja, '.+/', '') AS slika FROM web_slika WHERE akcija = 1 GROUP BY roba_id, web_slika_id,flag_prikazi,putanja,alt) ws ON r.roba_id = ws.roba_id "
+        ." LEFT JOIN (SELECT (sum(kolicina) - sum(rezervisano)) AS lager, roba_id FROM lager WHERE orgj_id IN (".$_SESSION['magacin'].")AND poslovna_godina_id = ".$_SESSION['godina']." GROUP BY roba_id) l ON l.roba_id = r.roba_id "
+        ." WHERE r.roba_id <> -1 AND r.flag_aktivan = 1 AND r.flag_prikazi_u_cenovniku = 1 AND (l.lager > r.web_minimalna_kolicina OR r.web_flag_obavezan_prikaz = 1) AND r.tip_cene = $1 "
+        .$uslov_opis
+        .$uslov_karakteristike
+        .$uslov_web_cena
+        .$uslov_slika
+        ." ORDER BY random() LIMIT ".$limit;
+        //echo $sql;
+
+        $this->con->query($sql,"artikli_izdvajamo",array($tip));   
+        $ret = array();
+        while($rowCart = $this->con->fetchArray()){
+            $ret[]=$rowCart;
+        };
+        return $ret;
+    }
+
+    //Vraca detaljno proizvod
+     public function articlesItem($roba_id){
+    	if($roba_id==""){
+    		$this->product_exist = false;
+    	}else{
+    		$sql = "SELECT r.roba_id, r.naziv_web, r.web_cena, r.akcijska_cena, r.akcija_popust, r.akcija_flag_primeni, r.web_vrsta_prikaza
+            , r.".$_SESSION['vrsta_cene'].", r.web_opis, r.grupa_pr_id,r.web_flag_karakteristike, g.grupa, l.kol, gr.putanja_slika, r.dobavljac_id FROM roba r 
+            INNER JOIN grupa_pr g ON r.grupa_pr_id=g.grupa_pr_id 
+            INNER JOIN (SELECT (sum(kolicina)-sum(rezervisano)) as kol, roba_id FROM lager group by roba_id) l  ON r.roba_id = l.roba_id
+            INNER JOIN (SELECT grupa_pr_id,putanja_slika FROM grupa_pr) gr ON r.grupa_pr_id = gr.grupa_pr_id 
+            WHERE r.flag_aktivan=1 AND r.roba_id = $1";
+            //echo $sql;
+        	$this->con->query($sql,"artikal",array($roba_id));
+        	if($this->con->numRows() > 0){
+            	$this->product_exist = true;
+            	$this->roba_id = $this->con->fetchResult('roba_id',0); 
+            	$this->naziv_web = $this->con->fetchResult('naziv_web',0);
+				$this->web_cena = $this->con->fetchResult('web_cena',0);				
+				$this->akcija_flag_primeni = $this->con->fetchResult('akcija_flag_primeni',0);
+				$this->akcija_pupust = $this->con->fetchResult('akcija_popust',0);
+                $this->web_vrsta_prikaza = $this->con->fetchResult('web_vrsta_prikaza',0);
+                $this->lager = $this->con->fetchResult('kol',0);
+                $this->grupa_slika = $this->con->fetchResult('putanja_slika',0);
+				if($this->akcija_flag_primeni==1){
+				
+            	$this->cena=$this->con->fetchResult('akcijska_cena',0);
+				}
+				else if($this->akcija_flag_primeni!=1){
+				
+            	$this->cena = $this->con->fetchResult($_SESSION['vrsta_cene'],0);
+				}
+            	$this->web_opis = $this->con->fetchResult('web_opis',0);
+                $this->grupa_pr_id = $this->con->fetchResult('grupa_pr_id',0);
+            	$this->grupa = $this->con->fetchResult('grupa',0);
+                $this->dobavljac = $this->con->fetchResult('dobavljac_id',0);
+            	$this->web_karakteristike = $this->articlesSpecs($this->con->fetchResult('roba_id',0),$this->con->fetchResult('web_flag_karakteristike',0));
+               
+                //Radi update koliko je puta pregledan artikal
+                $this->con->query("UPDATE roba SET pregledan_puta = pregledan_puta+1 WHERE roba_id = $1","artikal_pregledan",array($roba_id));        	
+        	}else{
+        		$this->product_exist = false;
+        	}
+    	}        
+    }
+
+    //Vraca slike
+    public function articlesItemImages($roba_id,$akcija){
+        $sql = "SELECT roba_id,web_slika_id,flag_prikazi,putanja,alt,regexp_replace(putanja, '.+/', '') AS slika FROM web_slika WHERE roba_id = $1 AND akcija = $2 AND flag_sticker = 0";
+        $this->con->query($sql,"slike_artikal",array($roba_id,$akcija));   
+        $ret = array();
+        while($rowCart = $this->con->fetchArray()){
+            $ret[]=$rowCart;
+        };
+        return $ret;
+    }
+
+
+    //Vraca sticker sliku
+    public function articlesStickerImages($roba_id){
+        //Vrati sliku ako postoji za sticker
+        $this->con->query("SELECT * FROM web_slika WHERE roba_id = $1 AND flag_sticker = 1","artikal_slika_sticker".$roba_id,array($roba_id));
+        if($this->con->numRows() > 0){
+            return $this->con->fetchResult('putanja',0);   
+        }else{
+            return 'images/products/big/noimage.jpg';     
+        }
+    }
+    
+
+    //Prikazuje karakteristike za artikal u zavisnosti od flag-a
+    public function articlesSpecs($roba_id,$web_flag_karakteristike){
+    	switch($web_flag_karakteristike){
+            //HTML
+            case "0":
+            	$sql = "SELECT web_karakteristike FROM roba WHERE roba_id = $1";
+            	$this->con->query($sql,"web_karakteristike",array($roba_id));
+            	return $this->con->fetchResult('web_karakteristike',0);
+            break;
+            //Generisane
+            case "1":
+            	$tabela_begin = '<table class="tabela-karakteristike-generisana" cellspacing="0" cellpadding="0">';
+				$celije = '';
+				$tabela_end = '</table>';
+				$sql = "SELECT wrk.roba_id,gpn.naziv,gpn.css AS css_naziv,wrk.vrednost,wrk.vrednost_css AS css_vrednost FROM web_roba_karakteristike wrk "
+				."INNER JOIN grupa_pr_naziv gpn ON wrk.grupa_pr_naziv_id=gpn.grupa_pr_naziv_id WHERE wrk.roba_id = $1 ";
+				$this->con->query($sql,"web_karakteristike",array($roba_id));
+				while($rowKarakteristike = $this->con->fetchObject()){
+					$celije = $celije. '<tr><td class="celija-karakteristike-generisana-naziv">'.$rowKarakteristike->naziv.'</td><td class="celija-karakteristike-generisana-vrednost">'.$rowKarakteristike->vrednost.'</td></tr>';	
+				}
+				return $tabela_begin.$celije.$tabela_end;
+            break;
+            //Generisane od dobavljaca
+            case "2":
+            	$tabela_begin = '<table class="tabela-karakteristike-generisana" cellspacing="0" cellpadding="0">';
+				$celije = '';
+				$tabela_end = '</table>';
+				$sql = "SELECT karakteristika_naziv, karakteristika_vrednost FROM dobavljac_cenovnik_karakteristike WHERE roba_id = $1 ";
+				$this->con->query($sql,"web_karakteristike",array($roba_id));
+				while($rowKarakteristike = $this->con->fetchObject()){
+					$celije = $celije. '<tr><td class="celija-karakteristike-generisana-naziv">'.$rowKarakteristike->karakteristika_naziv.'</td><td class="celija-karakteristike-generisana-vrednost">'.$rowKarakteristike->karakteristika_vrednost.'</td></tr>';	
+				}
+				return $tabela_begin.$celije.$tabela_end;
+            break;
+            default:
+            	$sql = "SELECT web_karakteristike FROM roba WHERE roba_id = $1";
+            	$this->con->query($sql,"web_karakteristike",array($roba_id));
+            	return $this->con->fetchResult('web_karakteristike',0);
+            break;
+        }
+    }
+
+
+     //Prikazuje karakteristike za artikal, skracene u okviru liste proizvoda
+    public function articlesSpecsShort($roba_id,$web_flag_karakteristike,$offset){
+        switch($web_flag_karakteristike){
+            //HTML
+            case "0":
+                $misc = new Misc($this->con);
+                $sql = "SELECT web_karakteristike FROM roba WHERE roba_id = $1";
+                $this->con->query($sql,"web_karakteristike".$roba_id,array($roba_id));
+                return $misc->miscShortString($this->con->fetchResult('web_karakteristike',0),100);
+            break;
+            //Generisane
+            case "1":
+                $tabela_begin = '';
+                $celije = '';
+                $tabela_end = '';
+                $sql = "SELECT wrk.roba_id,gpn.naziv,gpn.css AS css_naziv,wrk.vrednost,wrk.vrednost_css AS css_vrednost FROM web_roba_karakteristike wrk "
+                ."INNER JOIN grupa_pr_naziv gpn ON wrk.grupa_pr_naziv_id=gpn.grupa_pr_naziv_id WHERE wrk.roba_id = $1 ORDER BY wrk.web_roba_karakteristike_id ASC  LIMIT 4 OFFSET $2 ";
+                $this->con->query($sql,"web_karakteristike".$roba_id,array($roba_id,$offset));
+                while($rowKarakteristike = $this->con->fetchObject()){
+                    $celije = $celije. '<li>';
+                    $celije = $celije. '<span>'.$rowKarakteristike->naziv.'</span><span>'.$rowKarakteristike->vrednost.'</span>';
+                    $celije = $celije. '</li>';
+                }
+                return $tabela_begin.$celije.$tabela_end;
+            break;
+            //Generisane od dobavljaca
+            case "2":
+                $tabela_begin = '';
+                $celije = '';
+                $tabela_end = '';
+                $sql = "SELECT karakteristika_naziv, karakteristika_vrednost FROM dobavljac_cenovnik_karakteristike WHERE roba_id = $1 ORDER BY dobavljac_cenovnik_karakteristike_id ASC LIMIT 4 OFFSET $2";
+                $this->con->query($sql,"web_karakteristike".$roba_id,array($roba_id,$offset));
+                while($rowKarakteristike = $this->con->fetchObject()){
+                    $celije = $celije. '<li>';
+                    $celije = $celije. '<span>'.$rowKarakteristike->karakteristika_naziv.'</span><span>'.$rowKarakteristike->karakteristika_vrednost.'</span>'; 
+                    $celije = $celije. '</li>';
+                }
+                return $tabela_begin.$celije.$tabela_end;
+            break;
+            default:
+                $sql = "SELECT web_karakteristike FROM roba WHERE roba_id = $1";
+                $this->con->query($sql,"web_karakteristike".$roba_id,array($roba_id));
+                return $this->con->fetchResult('web_karakteristike',0);
+            break;
+        }
+    }
+
+
+    //Prikazuje paginaciju
+    public function articlesPagination($br_paginacija = 9){
+        //Prvo proveravamo da li uopste ima proizvoda
+        if($this->count > 0){
+            $max_page_number = ceil($this->count/$_SESSION['max_lista_robe']);
+            if($max_page_number<$br_paginacija){
+                $pag_step = floor($max_page_number/2);
+            }
+            else{$pag_step=floor($br_paginacija/2);}
+           // echo "MAXPAGE:".$max_page_number." PageStep:".$pag_step." Pagination broj:".$br_paginacija;
+            $curent_page='';
+            
+            if($max_page_number>1){
+
+                //Ako je prva stranica
+                if($_SESSION['page_lista_robe'] == "1"){
+                    echo '<li><a class="pag-current" href="javascript:void(0);" id="1">1</a></li>';
+                    if($max_page_number >= $br_paginacija){
+
+                        for($i=2;$i<=$br_paginacija;$i++){
+                            echo '<li><a href="javascript:void(0);" id="'.$i.'">'.$i.'</a></li>';
+                        }
+                        echo '<li><a href="javascript:void(0);" id="2">></a></li>';
+                        echo '<li><a href="javascript:void(0);" id="'.$max_page_number.'">>></a></li>';
+                    }else{
+                        for($i=2;$i<=$max_page_number;$i++){
+                            echo '<li><a href="javascript:void(0);" id="'.$i.'">'.$i.'</a></li>';
+                        }
+                    }
+                }
+            
+                //Ako se nalazi na stranicama vecim od polovine prikaza u paginacija
+                elseif(($_SESSION['page_lista_robe'] > $pag_step) and ($_SESSION['page_lista_robe'] < $max_page_number)){
+
+                    echo '<li><a href="javascript:void(0);" id="1"><<</a></li>';
+                    echo '<li><a href="javascript:void(0);" id="'.($_SESSION['page_lista_robe']-1).'"><</a></li>';
+
+                    for($i=$pag_step;$i>0;$i--){
+                        echo '<li><a href="javascript:void(0);" id="'.($_SESSION['page_lista_robe']-$i).'">'.($_SESSION['page_lista_robe']-$i).'</a></li>';
+                    }
+                    echo '<li><a class="pag-current" href="javascript:void(0);" id="'.$_SESSION['page_lista_robe'].'">'.$_SESSION['page_lista_robe'].'</a></li>';
+                    for($i=1;$i<=$pag_step;$i++){
+                        if(($_SESSION['page_lista_robe']+$i)<=$max_page_number){
+                            echo '<li><a href="javascript:void(0);" id="'.($_SESSION['page_lista_robe']+$i).'">'.($_SESSION['page_lista_robe']+$i).'</a></li>';
+                        }
+                    }
+                    echo '<li><a href="javascript:void(0);" id="'.($_SESSION['page_lista_robe']+1).'">></a></li>';
+                    echo '<li><a href="javascript:void(0);" id="'.$max_page_number.'">>></a></li>';
+                }    
+                
+                //Ako se nalazi na manjim stranicama od polovine    
+                elseif(($_SESSION['page_lista_robe'] <= $pag_step) and ($_SESSION['page_lista_robe'] < $max_page_number)) {    
+                	if($max_page_number<$br_paginacija){$dopuna=$max_page_number;}else{$dopuna=$br_paginacija;}  
+                    for($i=1;$i<=$dopuna;$i++){
+                        if($i==$_SESSION['page_lista_robe']){
+                            echo '<li><a class="pag-current" href="javascript:void(0);" id="'.$i.'">'.$i.'</a></li>';
+                        }
+                        else{
+                            echo '<li><a href="javascript:void(0);" id="'.$i.'">'.$i.'</a></li>';
+                        }            
+                    }
+                   
+
+                    echo '<li><a href="javascript:void(0);" id="'.($_SESSION['page_lista_robe']+1).'">></a></li>';
+                    echo '<li><a href="javascript:void(0);" id="'.$max_page_number.'">>></a></li>';
+                }
+                
+                //Ako se nalazi na zadnjoj stranici u paginaciji
+                elseif($_SESSION['page_lista_robe'] == $max_page_number) {
+                    echo '<li><a href="javascript:void(0);" id="1"><<</a></li>';
+                    echo '<li><a href="javascript:void(0);" id="'.($_SESSION['page_lista_robe']-1).'"><</a></li>';
+                        
+                    for($i=$max_page_number-1;$i>0;$i--){
+                        echo '<li><a href="javascript:void(0);" id="'.($max_page_number-$i).'">'.($max_page_number-$i).'</a></li>';          
+                    }
+                    echo  '<li><a class="pag-current" href="javascript:void(0);" id="'.$max_page_number.'">'.$max_page_number.'</a></li>';
+                }
+            }    
+        }   
+    }    
+
+
+	
+    //Prikazuje limit
+    public function articlesLimit(){
+   		switch($_SESSION['max_lista_robe']){
+   			case "12":
+                echo '<label><input type="checkbox" name="option[]" value="12" class="filter-limit" checked>12</label>';
+                echo '<label><input type="checkbox" name="option[]" value="24" class="filter-limit">24</label>';
+                echo '<label><input type="checkbox" name="option[]" value="36" class="filter-limit">36</label>';
+   			break;
+   			case "24":
+   				echo '<label><input type="checkbox" name="option[]" value="12" class="filter-limit">12</label>';
+                echo '<label><input type="checkbox" name="option[]" value="24" class="filter-limit" checked>24</label>';
+                echo '<label><input type="checkbox" name="option[]" value="36" class="filter-limit">36</label>';
+   			break;
+   			case "36":
+   				echo '<label><input type="checkbox" name="option[]" value="12" class="filter-limit">12</label>';
+                echo '<label><input type="checkbox" name="option[]" value="24" class="filter-limit">24</label>';
+                echo '<label><input type="checkbox" name="option[]" value="36" class="filter-limit" checked>36</label>';
+   			break;
+   			default:
+   				echo '<label><input type="checkbox" name="option[]" value="12" class="filter-limit" checked>12</label>';
+                echo '<label><input type="checkbox" name="option[]" value="24" class="filter-limit">24</label>';
+                echo '<label><input type="checkbox" name="option[]" value="36" class="filter-limit">36</label>';
+   			break;
+   		}        
+    }
+
+    //Prikazuje order
+    public function articlesOrder(){
+    	switch($_SESSION['sort_lista_robe']){
+    		case "price_desc":
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="price_desc" checked>Cena - opadajuce</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="price_asc">Cena - rastuce</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="newest">Najnovije</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="most_viewed">Najpregledanije</label>';
+    		break;
+    		case "price_asc":
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="price_desc">Cena - opadajuce</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="price_asc" checked>Cena - rastuce</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="newest">Najnovije</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="most_viewed">Najpregledanije</label>';
+    		break;
+    		case "newest":
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="price_desc">Cena - opadajuce</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="price_asc">Cena - rastuce</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="newest" checked>Najnovije</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="most_viewed">Najpregledanije</label>';
+    		break;
+            case "most_viewed":
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="price_desc">Cena - opadajuce</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="price_asc">Cena - rastuce</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="newest">Najnovije</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="most_viewed" checked>Najpregledanije</label>';
+            break;
+    		default:
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="price_desc" checked>Cena - opadajuce</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="price_asc">Cena - rastuce</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="newest">Najnovije</label>';
+                echo '<label><input type="checkbox" name="option[]" class="filter-sorting" value="most_viewed">Najpregledanije</label>';
+    		break;
+    	}
+    }
+
+    //Ispisuje pored sortiranje i limit koji je odabran
+    public function articlesFiltersHead($tip){
+        if($tip=='limit'){
+            switch($_SESSION['max_lista_robe']){
+                case "12":
+                    echo '12';
+                break;
+                case "24":
+                    echo '24';
+                break;
+                case "36":
+                    echo '36';
+                break;
+                default:
+                    echo '12';
+                break;
+            }        
+        }else{
+            switch($_SESSION['sort_lista_robe']){
+            case "price_desc":
+                echo 'Cena - opadajuæe';
+            break;
+            case "price_asc":
+                echo 'Cena - rastuæe';
+            break;
+            case "newest":
+                echo 'Najnovije';
+            break;
+            case "most_viewed":
+                echo 'Najpregledanije';
+            break;
+            default:
+                echo 'Cena - opadajuæe';
+            break;
+            }
+        }
+    }
+
+    //Vraca proizvodjace
+    public function articlesManufacturer($proizvodjaci){
+        $sql = "SELECT p.proizvodjac_id, p.naziv FROM proizvodjac p WHERE p.proizvodjac_id <> -1 AND proizvodjac_id IN(".$proizvodjaci.") ORDER BY p.naziv ASC";
+        $this->con->query($sql,"proizvodjaci",array());   
+        $ret = array();
+        $proizvodjaci_current = explode(",",$_SESSION['proizvodjac_id']);
+        while($rowCart = $this->con->fetchArray()){
+            $ret[]=$rowCart;
+        };
+        foreach ($ret as $proizvodjac){
+            if (in_array($proizvodjac['proizvodjac_id'], $proizvodjaci_current)) {
+                echo '<p><input type="checkbox" class="checkbox-manufacturers" name="option[]" value="'.$proizvodjac['proizvodjac_id'].'" checked/><label>'.$proizvodjac['naziv'].'</label></p>';
+            }else{
+                echo '<p><input type="checkbox" class="checkbox-manufacturers" name="option[]" value="'.$proizvodjac['proizvodjac_id'].'"/><label>'.$proizvodjac['naziv'].'</label></p>';
+            }
+        }
+    }
+
+    //Vraca nazive karakteristika
+    public function articlesSpecsName(){
+        $sql = "SELECT * FROM grupa_pr_naziv WHERE grupa_pr_id = $1";
+        $this->con->query($sql,"grupa_pr_naziv",array($_GET['grupa_pr_id']));   
+        $ret = array();
+        while($rowCart = $this->con->fetchArray()){
+            $ret[]=$rowCart;
+        };
+        return $ret;
+    }
+	
+	//Vraca vrednosti karakteristika
+    public function articlesSpecsValues($grupa_pr_naziv_id){
+        $sql = "SELECT * FROM grupa_pr_vrednost WHERE grupa_pr_naziv_id = $1 ORDER BY naziv ASC";
+        $this->con->query($sql,"vrednosti_".$grupa_pr_naziv_id,array($grupa_pr_naziv_id));   
+        $ret = array();
+        $vrednosti_current = explode(",",$_SESSION['vrednosti']);
+        while($rowCart = $this->con->fetchArray()){
+            $ret[]=$rowCart;
+        };
+
+        foreach ($ret as $vrednosti){
+        	if (in_array($vrednosti['grupa_pr_vrednost_id'], $vrednosti_current)) {
+                echo '<label><input type="checkbox" name="option[]" value="'.$vrednosti['grupa_pr_vrednost_id'].'" checked/>'.$vrednosti['naziv'].'</label>';
+            }else{
+                echo '<label><input type="checkbox" name="option[]" value="'.$vrednosti['grupa_pr_vrednost_id'].'"/>'.$vrednosti['naziv'].'</label>';
+            }
+        	
+        }
+    }
+
+    //Ispisuje raspolozive filtere za cene
+    public function articlesPricesValues(){
+         $cene = array(
+            array("1","0","24999"),
+            array("2","25000","29999"),
+            array("3","30000","34999"),
+			array("4","35000","39999"),
+			array("5","40000","44999"),
+			array("6","45000","49999"),
+			array("7","50000","54999"),
+			array("8","55000","59999"),
+			array("9","60000","64999"),
+			array("10","65000","69999"),
+			array("11","70000","74999"),
+			array("12","75000","79999"),
+			array("13","80000","99999"),
+			array("14","100000","119999"),
+                        array("15","120000","200000"),
+			
+        ); 
+
+         foreach ($cene as $value) {        
+            if($_SESSION['articles_current_max_value']==$value[2]){
+                echo '
+				<div class="filteri_cene">
+				<p><input type="checkbox" class="checkbox-vrednosti" data-price-range="'.$value[0].'" name="option[]" data-price-down="'.$value[1].'" data-price-up="'.$value[2].'" checked/><label><span>'.$value[1].'.00</span> - <span>'.$value[2].'.00 din.</span></label></p>
+				</div>
+				'; 
+            }else{
+                echo '
+				<div class="filteri_cene">
+				<p><input type="checkbox" class="checkbox-vrednosti" data-price-range="'.$value[0].'" name="option[]" data-price-down="'.$value[1].'" data-price-up="'.$value[2].'"/><label><span>'.$value[1].'.00</span> - <span>'.$value[2].'.00 din.</span></label></p>
+				</div>
+				';                 
+            }
+
+        }
+    }
+
+    //Vraca encoded sliku
+    public function articlesImagesBase64($putanja){
+        //Ako je internet explorer manje ili 8, ne radi
+        if(preg_match('/(?i)msie [2-8]/',$_SERVER['HTTP_USER_AGENT'])){
+            return $putanja;
+        }else{
+            $result = 'data:image/' . pathinfo($putanja, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($putanja));
+            return $result;
+        }      
+    }
+
+
+
+    //Pravi link na product info strani za kategoriju
+    public function articlesCategoryLink($roba_id,$grupa_pr_id){
+        $url = new Misc($this->con);
+        //Uzimamo grupe
+        $sql = "WITH RECURSIVE breadcrumb(grupa_pr_id, grupa, parrent_grupa_pr_id) AS ( "
+        ."SELECT grupa_pr_id, grupa, parrent_grupa_pr_id FROM grupa_pr WHERE grupa_pr_id = (SELECT grupa_pr_id FROM roba WHERE roba_id = $1) "
+        ."UNION "
+        ."SELECT grupa_pr.grupa_pr_id, grupa_pr.grupa, grupa_pr.parrent_grupa_pr_id FROM grupa_pr, breadcrumb WHERE breadcrumb.parrent_grupa_pr_id = grupa_pr.grupa_pr_id) "
+        ."SELECT * FROM breadcrumb WHERE grupa_pr_id NOT IN(-1,0) "
+        ."ORDER BY grupa_pr_id ASC";
+        $this->con->query($sql,"category_link".$roba_id,array($roba_id));
+
+        $products = '/products/'.$grupa_pr_id."/";
+        $slash = '';
+        while($rowGrupe = $this->con->fetchObject()){
+            $products .= $slash . $url->miscFormatUrlKey($rowGrupe->grupa);
+            $slash = '/';
+        };
+        return $products;
+    }
+
+
+    //Vraca naziv kategorije prema id
+    public function articlesGroupName(){
+        if($_GET['grupa_pr_id']<>"-1"){
+            $sql = "SELECT grupa FROM grupa_pr WHERE grupa_pr_id = $1";
+            $this->con->query($sql, "category_name",array($_GET['grupa_pr_id']));
+            return $this->con->fetchResult('grupa',0);                                        
+        }else{
+            return 'Artikli'; 
+        };
+    }
+
+    //Vraca ukljucene filtere
+    public function articlesFiltersReturn($tip){
+        $ret = array();
+        if($tip=='filter_proizvodjac'){
+            if($_SESSION['proizvodjac_id']<>"" and $_SESSION['proizvodjac_id']<>"-1"){
+                $sql = "SELECT * FROM proizvodjac WHERE proizvodjac_id IN(".$_SESSION['proizvodjac_id'].") ";
+                $this->con->query($sql,$tip,array());   
+                while($rowCart = $this->con->fetchArray()){
+                    $ret[]=$rowCart;
+                };
+            }
+        }else{
+            if($_SESSION['vrednosti']<>"" and $_SESSION['vrednosti']<>"-1"){
+                $sql = "SELECT * FROM grupa_pr_vrednost WHERE grupa_pr_vrednost_id IN(".$_SESSION['vrednosti'].") ";
+                $this->con->query($sql,$tip,array());   
+                $ret = array();
+                while($rowCart = $this->con->fetchArray()){
+                    $ret[]=$rowCart;
+                };     
+            }       
+        }
+        return $ret;
+        
+    }
+
+
+    //Vraca sve kategorije sa nadredjenim kategorijma kome pripada taj artikal
+    public function articlesCategoriesRecursive($roba_id){
+        $url = new Misc($this->con);
+        $sql = "WITH RECURSIVE breadcrumb(grupa_pr_id, grupa, parrent_grupa_pr_id) AS (
+          SELECT grupa_pr_id, grupa, parrent_grupa_pr_id FROM grupa_pr WHERE grupa_pr_id = (SELECT grupa_pr_id FROM roba WHERE roba_id = $1)
+          UNION
+            SELECT grupa_pr.grupa_pr_id, grupa_pr.grupa, grupa_pr.parrent_grupa_pr_id FROM grupa_pr, breadcrumb
+            WHERE breadcrumb.parrent_grupa_pr_id = grupa_pr.grupa_pr_id )
+        SELECT * FROM breadcrumb WHERE grupa_pr_id NOT IN(-1,0) 
+        ORDER BY parrent_grupa_pr_id ASC";
+        $this->con->query($sql,"category_recursive",array($roba_id));
+
+        $groups = '';
+        $separator = '';
+        while($rowGrupe = $this->con->fetchObject()){
+            $groups .= $separator . $url->miscFormatUrlKey($rowGrupe->grupa_pr_id);
+            $separator = ',';
+        };
+        return $groups;
+        
+    }
+
+	//Vraca glavnu sliku
+	public function articlesImages($velicina,$putanja,$slika,$encoded = false){
+		$images = new Images();
+    	switch($velicina){
+    		case 'big':
+                //Ako putanja nije prazna
+                if($putanja!=''){
+                    //Ako postoji big
+                    if(file_exists($putanja)){
+                        $result = $putanja;
+                    }else{
+                        $result = 'images/products/big/noimage.jpg';
+                    }
+                }else{
+                    $result = 'images/products/big/noimage.jpg';
+                }   			
+            break;
+            case "standard":
+                //Ako putanja nije prazna
+                if($putanja!=''){
+                     //Ako postoji standard
+                    if(file_exists('images/products/standard/'.$slika)){
+                        $result = 'images/products/standard/'.$slika;
+                    }else{
+                        //Ako ne postoji, kreiracemo je od velike ako postoji
+                        if(file_exists($putanja)){
+                            $images->load('./images/products/big/'.$slika);
+                            $images->resizeToWidth($_SESSION['img_sirina_standard']);
+                            $images->save('./images/products/standard/'.$slika);
+                            //Ako je napravio sliku
+                            if(file_exists('images/products/standard/'.$slika)){
+                                $result = 'images/products/standard/'.$slika;   
+                            }else{
+                                $result = 'images/products/standard/noimage.jpg';
+                            }                  
+                        }else{
+                            $result = 'images/products/standard/noimage.jpg';
+                        }
+                    }
+                }else{
+                    $result = 'images/products/standard/noimage.jpg';    
+                }               
+            break;
+			case 'medium':
+                //Ako putanja nije prazna
+                if($putanja!=''){
+                     //Ako postoji medium
+                    if(file_exists('images/products/medium/'.$slika)==true){
+                        $result = 'images/products/medium/'.$slika;
+                    }else{
+                        //Ako ne postoji, kreiracemo je od velike ako postoji
+                        if(file_exists($putanja)){
+                            $images->load('./images/products/big/'.$slika);
+                            $images->resizeToWidth($_SESSION['img_sirina_medium']);
+                            $images->save('./images/products/medium/'.$slika);
+                            //Ako je napravio sliku
+                            if(file_exists('images/products/medium/'.$slika)){
+                                $result = 'images/products/medium/'.$slika; 
+                            }else{
+                                $result = 'images/products/medium/noimage.jpg';
+                            }                  
+                        }else{
+                            $result = 'images/products/medium/noimage.jpg';
+                        }
+                    }
+                }else{
+                    $result = 'images/products/medium/noimage.jpg';
+                }               
+            break;
+			case 'small':
+                //Ako putanja nije prazna
+                if($putanja!=''){
+                    //Ako postoji small
+                    if(file_exists('images/products/small/'.$slika)){
+                        $result = 'images/products/small/'.$slika;
+                    }else{
+                        //Ako ne postoji, kreiracemo je od velike ako postoji
+                        if(file_exists($putanja)){
+                            $images->load('./images/products/big/'.$slika);
+                            $images->resizeToWidth($_SESSION['img_sirina_small']);
+                            $images->save('./images/products/small/'.$slika);
+                            //Ako je napravio sliku
+                            if(file_exists('images/products/small/'.$slika)){
+                                $result = 'images/products/small/'.$slika;  
+                            }else{
+                                $result = 'images/products/small/noimage.jpg';
+                            }                  
+                        }else{
+                            $result = 'images/products/small/noimage.jpg';
+                        }
+                    }    
+                }else{
+                    $result = 'images/products/small/noimage.jpg';
+                }               
+            break;
+        }         
+        //Ako je enkodovana
+        if($encoded == true){
+            return $this->articlesImagesBase64($result);    
+        }else{
+           return '/'.$result; 
+        }
+        
+   }
+  
+}
+
+
+?>

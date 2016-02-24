@@ -1,0 +1,11 @@
+********* simple *********
+http://framework.zend.com/manual/1.12/en/learning.html
+
+*********all simple********
+http://framework.zend.com/apidoc/2.3/namespaces/Zend.html
+
+********* db ************
+http://framework.zend.com/manual/1.12/en/zend.db.html
+
+********session***********
+http://framework.zend.com/manual/1.12/en/zend.session.advanced_usage.html

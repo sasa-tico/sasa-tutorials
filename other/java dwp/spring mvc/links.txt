@@ -1,0 +1,46 @@
+*****************************************
+http://www.mkyong.com/tutorials/spring-mvc-tutorials/
+http://www.mkyong.com/tag/spring-mvc/
+*****************************************
+
+****controllers*****
+http://www.tutorialspoint.com/spring/spring_web_mvc_framework.htm
+http://www.codejava.net/frameworks/spring/14-tips-for-writing-spring-mvc-controller
+
+
+****select****
+http://www.mkyong.com/spring-mvc/spring-mvc-dropdown-box-example/
+http://www.dzone.com/tutorials/java/struts/struts-example/struts-html-select-tag-example-1.html
+http://www.mkyong.com/struts/struts-htmlselect-drop-down-box-example/
+
+
+****spring mvc*****
+http://docs.spring.io/spring/docs/current/spring-framework-reference/html/mvc.html
+http://stackoverflow.com/questions/12146298/spring-mvc-how-to-perform-validation
+http://www.journaldev.com/2668/spring-mvc-form-validation-example-using-annotation-and-custom-validator-implementation
+http://examples.javacodegeeks.com/enterprise-java/spring/mvc/spring-mvc-controller-example/
+
+http://www.baeldung.com/registration-with-spring-mvc-and-spring-security
+http://www.petrikainulainen.net/programming/spring-framework/adding-social-sign-in-to-a-spring-mvc-web-application-registration-and-login/
+
+
+
+****password pattern****
+http://stackoverflow.com/questions/3802192/regexp-java-for-password-validation
+
+
+
+****you tube tutorial****
+https://www.youtube.com/watch?v=bnB4x-oAd_M
+https://www.youtube.com/watch?v=x2BksK2q6Qk&list=PLTgRMOcmRb3P0KQlTUMBVpIlo2_MKFXIM&index=1
+https://www.youtube.com/watch?v=EKobsnv9dsA&index=1&list=PLA3AD4211EBE70E86
+
+
+
+*****registration page*******
+https://www.youtube.com/user/cukhoailangnuong
+
+https://www.youtube.com/watch?v=A_oKlQVlf0s
+
+******apache tomcat ******
+https://www.youtube.com/playlist?list=PL8ACD5B5C7BF165A9

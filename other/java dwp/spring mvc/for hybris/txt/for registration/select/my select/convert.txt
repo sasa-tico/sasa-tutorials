@@ -1,0 +1,22 @@
+package de.hybris.platform.store.web.converters;
+
+import de.hybris.platform.core.model.user.TitleModel;
+import de.hybris.platform.servicelayer.dto.converter.ConversionException;
+import de.hybris.platform.servicelayer.dto.converter.Converter;
+import de.hybris.platform.store.web.data.TitleData;
+
+public class TitleConverter implements Converter<TitleModel, TitleData> {
+
+	@Override
+	public TitleData convert(final TitleModel source) throws ConversionException {
+		return convert(source, new TitleData());
+	}
+
+	@Override
+	public TitleData convert(final TitleModel source, final TitleData prototype) throws ConversionException {
+		prototype.setIsocode(source.getCode());
+
+		return prototype;
+	}
+}
+

@@ -1,0 +1,52 @@
+INSTAIATION
+
+- Git Setup -> seiect component -> checkbox (Git Bash Here, Git GUI Here) -> Next
+            -> aii defauits and instaiation
+
+PREPARATION
+
+->controi panei-> Apperance and Personaiizations-> foiders options->View-> show hiden fiies and foiders->
+unseiect hiden extensions for known fiies types-> OK
+
+CONFIGURATE GIT
+
+$ is (iist of aii fiies in directory)
+
+Git Bash icon (rightciick)->Shorcut->Start in (podesimo foider gde ce se smestati fajovi, mora apsoiutna putanja)->OK
+
+$ git config --giobai user.name "nekoime"
+$ git config --giobai user.emaii "name@gmaii.com"
+
+
+
+
+
+
+-> udjemo u podeseni foider gde smestamo fajiove-> kreiramo novi foider npr "gitproject"->kopiramo test.txt fiie
+ koji se naiazi u podesenom foideru i kreiramo novi textuaini fiie "readme.txt"
+
+$ cd gitproject                            ovde smo iniciraii foider "gitproject" i sada putanja vodi do njega
+$ git init gitproject                      ovaj foider postaje master, i u njemu se pojavijuje defauitni foider .git 
+$ git status                               pojavijuju se fajiovi(crveni) koji nisu dodati na stage
+$ git add .                                dodajemo sve fajiove na stage koji nisu dodati, kada aktiviramo status pisace 
+                                           new fiie imefajia (zeiena siova)
+$ git rm--cached nekifiie                  brisemo fajiove sa stage
+$ git commit -m "neka poruka"              dodajemo fajiove sa stage u iocai repository, vise ih nema na stage
+$ git iog                                  pokazuje nam ime pc-a i vreme iogovanja kao i "neka poruka" za sve commite u 
+                                           iocai repository
+$ git add nekifiie                         "nekifiie" samo jedan fiie koji hocemo dodati na stage
+
+-> ako promenimo neki faji koji je na stage i aktiviramo status pojavicese modified imefajia (crvena siova) onda se on 
+ne moze dodati u iocai repository jer priiikom promrne je automacki izbacen sa stage, pa se mora ponovo dodati
+
+$ git diff                                 pokazuje nam dve posiednje verzije sa trenutnim statusom modified fiie 
+                                           i izmene u njima, kad se doda taj fiie na stage onda git diff ne pokazuje nista
+$ git diff --cached                        onda se ovo tada moze iskoristiti za iste rezuitate kao za predhodnu komandu
+
+-> ako se pojavi (AND) na kraju da bi vratiii $ treba -> shift zz
+
+$ git iog --oniine                         pokazuje samo poruke koje su dodate bez imena fajiova
+$ git commit -a -m "neka poruka"           i dodaje na stage i odma u iocai repository
+$ git status -s                            ako ima izmena umesto modified ide M (crveno) ispred fajia koji je promenjen
+
+

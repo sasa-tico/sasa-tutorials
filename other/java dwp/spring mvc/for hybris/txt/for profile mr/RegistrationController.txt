@@ -1,0 +1,47 @@
+package de.hybris.platform.store.web.controllers.forms.registration;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+import de.hybris.platform.store.web.controllers.forms.registration.RegistrationInfo;
+
+/**
+ * @author m.randjelovic
+ *
+ */
+@Controller
+@RequestMapping(value="/profile")
+public class RegistrationController {
+	
+	@RequestMapping(method = RequestMethod.GET)
+	public ModelAndView doGet() {
+		final ModelAndView modelAndView = new ModelAndView("/components/registration/registrationForm.jsp");
+		final RegistrationInfo info = new RegistrationInfo();
+		modelAndView.addObject("registrationInfo", info);
+
+		return modelAndView;
+	}
+
+	@RequestMapping(method = RequestMethod.POST)
+	public ModelAndView doPost(@ModelAttribute final RegistrationInfo info, final BindingResult result) {
+        final RegistrationValidator profileValidator = new RegistrationValidator();
+		final ModelAndView modelAndView = new ModelAndView("/components/registration/registrationForm.jsp");
+        profileValidator.validate(info, result);
+        if (result.hasErrors()) {
+        modelAndView.addObject(GlobalMessages.ERROR_MESSAGES_HOLDER, DefaultMessagesConstants.PROFILE_SAVE_FAILED);
+   		} else {
+			modelAndView.addObject(GlobalMessages.CONF_MESSAGES_HOLDER, DefaultMessagesConstants.PROFILE_SAVE_SUCCESS);
+			this.userFacade.saveUser(info);
+
+		}
+
+		modelAndView.addObject("registrationInfo", info);
+
+		return modelAndView;
+	}
+
+}

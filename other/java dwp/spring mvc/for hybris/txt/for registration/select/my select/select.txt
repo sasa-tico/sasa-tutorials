@@ -1,0 +1,33 @@
+     <form:select class="select" 
+            cssErrorClass="invalidTextInput text_input_error profile_input_large"
+            path="country">
+          <option value="" selected="selected">
+           <spring:message code="delivery.country.select"/> 
+          </option>
+          <c:forEach var="countrie" items="${countries}">
+                     <option value="${countrie.isocode}">${countrie.name} </option>
+                </c:forEach>
+         </form:select>
+
+
+
+
+
+
+
+
+
+
+<form:select
+      cssClass="defaultTextInput text_input profile_input_large"
+      path="title"
+      cssErrorClass="invalidTextInput text_input_error profile_input_large"
+      >
+      <form:option value="NONE">Mr</form:option>
+      <form:option value="NONE">Mrs</form:option>
+      <form:option value="NONE">Mis</form:option>
+      <form:option value="NONE">Ms</form:option>
+      <form:option value="NONE">dr.</form:option>
+      <form:option value="NONE">Rev.</form:option>
+      <form:option value="NONE">prof.</form:option>
+      </form:select>

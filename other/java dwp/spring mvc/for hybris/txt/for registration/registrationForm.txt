@@ -1,0 +1,103 @@
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<div class="item_container_holder">
+ <div class="title_holder">
+  <div class="title">
+   <div class="title-top">
+    <span></span>
+   </div>
+  </div>
+  <h2>Registration Page</h2>
+ </div> 
+  <form:form id="registrationInfo" modelAttribute="registrationInfo" action="register" method="post" name="registrationInfo" autocomplete="off">
+   <p>${message}</p>
+<dl>
+    <dt>
+     <spring:message code="register.title" />:
+    </dt>
+    <dd>
+      <select
+      class="select" 
+      path="title"
+      name="title"
+      >
+    <OPTION value="none"> Please select
+    <OPTION value="mr"> Mr
+    <OPTION value="mrs"> Mrs
+    <OPTION value="mis"> Mis
+    <OPTION value="ms"> Ms
+    <OPTION value="dr"> dr.
+    <OPTION value="rev"> Rev.
+    <OPTION value="prof"> prof.
+  </select>
+    </dd>
+    <dt>
+     <spring:message code="register.firstname" />:
+    </dt>
+    <dd>
+     <form:input
+        cssClass="defaultTextInput text_input profile_input_large"
+        path="firstname"
+        cssErrorClass="invalidTextInput text_input_error profile_input_large"
+         />
+    </dd>
+    <dt>
+     <spring:message code="register.surname" />:
+    </dt>
+    <dd>
+     <form:input
+        cssClass="defaultTextInput text_input profile_input_large"
+        path="lastname"
+        cssErrorClass="invalidTextInput text_input_error profile_input_large"
+         />
+    </dd>
+    <dt>
+     <spring:message code="register.emailAddress" />:
+    </dt>
+    <dd>
+     <form:input
+        cssClass="defaultTextInput text_input profile_input_large"
+        path="mail"
+        cssErrorClass="invalidTextInput text_input_error profile_input_large"
+         />
+    </dd>
+    <dt>
+     <spring:message code="register.password" />:
+    </dt>
+    <dd>
+     <form:password
+        cssClass="defaultTextInput text_input profile_input_large"
+        path="password"
+        cssErrorClass="invalidTextInput text_input_error profile_input_large"
+         />
+    </dd>
+    <dt>
+     <spring:message code="register.confirmPassword" />:
+    </dt>
+    <dd>
+     <form:password
+        cssClass="defaultTextInput text_input profile_input_large"
+        path="password2"
+        cssErrorClass="invalidTextInput text_input_error profile_input_large"
+         />
+    </dd>
+    <dt style="color: red">
+        <spring:hasBindErrors
+	name="registrationInfo">
+	<spring:message code="register.required.message" />
+	</spring:hasBindErrors>
+    </dt>
+   </dl>
+							   <button class="defaultSubmit registerSubmit form"
+                                                           type="submit">
+                                                           <spring:message code="register.registrationsubmit" />
+                                                           </button>
+						
+						<td>&nbsp;</td>
+					
+
+				
+
+			</form:form>
+</div>

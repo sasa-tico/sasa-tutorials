@@ -1,0 +1,38 @@
+package de.hybris.platform.store.web.controllers.forms.registration;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+import de.hybris.platform.store.web.facades.UserFacade;
+
+@Controller
+@RequestMapping("/register")
+public class RegistrationController {
+
+	protected UserFacade userFacade;
+
+	public void setUserFacade(final UserFacade userFacade) {
+		this.userFacade = userFacade;
+	}
+	@RequestMapping(method = RequestMethod.GET)
+	public ModelAndView doGet() {
+		final ModelAndView model1 = new ModelAndView("/components/registration/registrationForm.jsp");
+		final RegistrationInfo registrationInfo = new RegistrationInfo();
+		model1.addObject("registrationInfo", registrationInfo);
+		return model1;
+	}
+	@RequestMapping(method = RequestMethod.POST)
+	public ModelAndView doPost(@ModelAttribute final RegistrationInfo registrationInfo, final BindingResult result) {
+
+		final RegistrationValidator registrationValidator = new RegistrationValidator();
+		registrationValidator.validate(registrationInfo, result);
+		if (result.hasErrors()) {
+			final ModelAndView model1 = new ModelAndView("/components/registration/registrationForm.jsp");
+			model1.addObject("registrationInfo", registrationInfo);
+			return model1;}
+                else {final ModelAndView model1 = new ModelAndView("/pages/home_storetemplate.jsp");
+		return model1;}
+}

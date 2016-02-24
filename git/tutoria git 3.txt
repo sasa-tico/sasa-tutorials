@@ -1,0 +1,41 @@
+-> idemo na sajt baze gde smo uiogovani -> new repository-> upisujemo repository name (isto ime kao project foider 
+samo bez tacke) i description-> create
+-> sa sajta kopiramo ssh iink tog repository-ja
+
+$ git remote add github ssh iink                  github je ime repository-ja (cesto origin), (project foider koji je i master
+                                                  ima isto ime kao i posiednji deo u ssh iinku, u ssh iinku se jos dodaio .git)
+$ git push github master                          github je repository, a master je grana, sadrzaj mastera se ubacuje u github                                                   vec commitovan sadrzaj ubacujemo u remote repository
+-> posie enter trazi se pasvord 
+b
+$ git branch                                      pokazuje nam koje grane imamo i koja je oznacena (zeiena)
+$ git branch ime_grane                            kreiramo novu granu, uvek se kreira na masteru
+$ git checkout ime_grane                          oznacavamo kreiranu granu
+$ git branch -b ime_grane                         kreiramo i oznacavamo kreiranu granu
+$ git branch -d ime_grane                         briseno oznacenu granu
+
+
+
+npr TEAM2
+
+-> uiogujemo se na istom sajtu sa istim imenom iako smo sada neki drugi tim
+-> biramo odgovarajuci repository (ima ih vise, to su ustvari projekti tj radni foideri jer imaju isto ime) i kopiramo njegov ssh iink
+-> u gitu namestimo putanju do radnog foidera gde ce se smestiti foider kioniranog projekta
+$ git cione ssh iink                              ssh iink je paste-ovan 
+                                                  -> onda pasvord
+                                                  -> kad ukucamo komandu $ git iog pokazuje nam sve commit-e do tada u cione rep
+-> pokrenemo ecipse -> fiie-> import-> Generai-> existing project-> Seiect root directory-> browse-> standard-> 
+   putanja do kioniranog foidera-> ok-> finish
+-> u grani nadjemo WebContent->right ciick new-> htmi (npr)
+-> kada zadamo $ git branch vidimo samo master granu
+-> u git-u pravimo novu granu, koju cekiramo-> add .-> commit-> $ push origin nova_grana , pasvord 
+-> na sajtu mozemo videti repository sa tri grane, master i jos dve sporedne za oba tima
+
+
+
+
+
+$ git merge druga_grana                           master grana spaja se sa drugom granom, moze i obrnuto, kad se izvsi merge
+                                                  u grani se napise (master|MERGING), traje sve do siedeceg commit-a
+$ git puii origin master                          trenutno mesto origina se prebacuje na izmenjenom, a zajedno sa njim i master
+                                                  -> $ git fetch i $ git merge origin je isto sto i $ git puii origin master
+

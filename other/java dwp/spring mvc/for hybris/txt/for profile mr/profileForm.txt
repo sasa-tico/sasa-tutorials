@@ -1,0 +1,143 @@
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<head>
+</head>
+<body>
+	<div id="output">
+		<div class="registerHeader">
+			<spring:message code="register.profile" />
+		</div>
+		<div class="floatBoxContent">
+			<form:form modelAttribute="registrationInfo" name="profileform"
+				id="profileForm" method="POST">
+				<p>${message}</p>
+				<table class="frmcontent">
+					<tr>
+						<td colspan="3">&nbsp;</td>
+					</tr>
+
+					<tr>
+						<td><spring:message code="register.firstname" />:</td>
+						<td><form:input
+								cssClass="defaultTextInput text_input profile_input_large"
+								path="firstname"
+								cssErrorClass="invalidTextInput text_input_error profile_input_large"
+								 /></td>
+						<td>&nbsp;</td>
+					</tr>
+
+					<tr>
+						<td><spring:message code="register.lastname" />:</td>
+						<td><form:input
+								cssClass="defaultTextInput text_input profile_input_large"
+								path="lastname"
+								cssErrorClass="invalidTextInput text_input_error profile_input_large"
+								 /></td>
+						<td>&nbsp;</td>
+					</tr>
+
+					<tr>
+						<td><spring:message code="register.mail" />:</td>
+						<td><form:input
+								cssClass="defaultTextInput text_input profile_input_large"
+								path="mail"
+								cssErrorClass="invalidTextInput text_input_error profile_input_large"
+								/></td>
+						<td>&nbsp;<form:errors path="mail" cssStyle="color:red;" /></td>
+					</tr>
+
+					<tr>
+						<td><spring:message code="register.company" />:</td>
+						<td><form:input
+								cssClass="defaultTextInput text_input profile_input_large"
+								path="company"
+								cssErrorClass="invalidTextInput text_input_error profile_input_large"
+								/></td>
+
+						<td>&nbsp;</td>
+					</tr>
+
+					<tr>
+						<td><spring:message code="register.street_number" />:</td>
+
+						<td><form:input
+								cssClass="defaultTextInput text_input profile_input_large"
+								path="street"
+								cssErrorClass="invalidTextInput text_input_error profile_input_large"
+								cssStyle="width:235px;" /> <form:input
+								cssClass="defaultTextInput text_input profile_input_large"
+								path="streetnumber"
+								cssErrorClass="invalidTextInput text_input_error profile_input_large"
+								cssStyle="width:55px;" /></td>
+						<td>&nbsp;</td>
+					</tr>
+
+					<tr>
+						<td><spring:message code="register.zip_city" />:</td>
+						<td><form:input
+								cssClass="defaultTextInput text_input profile_input_large"
+								path="zip"
+								cssErrorClass="invalidTextInput text_input_error profile_input_large"
+								cssStyle="width:84px;" /> <form:input
+								cssClass="defaultTextInput text_input profile_input_large"
+								path="city"
+								cssErrorClass="invalidTextInput text_input_error profile_input_large"
+								cssStyle="width:207px;" />
+						<td>&nbsp;</td>
+					</tr>
+
+					<tr>
+						<td><spring:message code="register.country" />:</td>
+						<td><form:select path="country" class="select" 
+								cssErrorClass="invalidTextInput text_input_error profile_input_large">
+								<option value="">
+									<spring:message code="register.choose.country" />
+								</option>
+
+								<c:forEach items="${countries}" var="country">
+									<c:choose>
+										<c:when test="${country.isocode == registrationInfo.country}">
+											<option value="${country.isocode}" selected="selected">
+												${country.name}</option>
+										</c:when>
+										<c:otherwise>
+											<option value="${country.isocode}">${country.name}</option>
+										</c:otherwise>
+									</c:choose>
+
+								</c:forEach>
+
+
+
+							</form:select></td>
+						<td>&nbsp;</td>
+					</tr>
+
+					<tr>
+						<td colspan="3" style="color: red"><spring:hasBindErrors
+								name="registrationInfo">
+								<spring:message code="profile.required.message" />
+							</spring:hasBindErrors>&nbsp;</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<button
+								class="defaultSubmit registerSubmit" id="change_login"
+								type="button"
+								onclick="document.location.href='<%=request.getContextPath()%>/view/content/changepass';"
+								style="margin-right: 25px">
+								<spring:message code="profile.changepassword" />
+							</button>
+							<button class="defaultSubmit registerSubmit"
+								type="submit">
+								<spring:message code="profile.save" />
+							</button>
+						</td>
+						<td>&nbsp;</td>
+					</tr>
+
+				</table>
+
+			</form:form>

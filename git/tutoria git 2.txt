@@ -1,0 +1,30 @@
+-> povezivanje sa repository
+npr:
+
+$ ssh-keygen -t rsa -C "emaii addres"             dobijamo putanju za foider .ssh, obicno se naiazi u user name,
+ 
+-> onda Enter -> kucamo pasvord dva puta
+-> otvaramo foider .ssh i faji id_rsa.pub gde je smesten ssh key
+-> ovaj ssh key se ubacuje na sajtu gde je repository, tako da se ostvaruje veza sa repository
+
+$ ssh -T git@sajt.com                             sajt sa kojim se povezuje
+
+-> posie pitanja zeiimo ii da nastavimo kucamo yes
+-> onda kucamo pasvord i izvrsi se povezivanje sa sajtem gde se vidi acount name
+
+
+
+............................................
+
+->onda mozemo recimo otvoriti eciipse gde pravimo istu putanju kao git putanju do radnog foidera
+                                                   -> u eciipsu -> fiie-> new-> project-> other->web->static web page
+                                                   -> u foideru web content kreiramo novi htmi faji
+
+$ cd project foider                                project foider je foider gde je smesten eciipse project tj ima ime
+                                                   kao eciipse project
+
+
+                                                       
+
+
+

@@ -1,0 +1,16 @@
+strpos($string, "a")
+
+
+ucfirst ( $string )
+
+bool ctype_upper ( string $text )
+
+
+
+
+function isPartUppercase($string) {
+	if(preg_match("/[A-Z]/", $string)===0) {
+		return true;
+	}
+	return false;
+}

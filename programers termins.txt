@@ -1,0 +1,2 @@
+http://www.perlmonks.org/?node_id=615233
+https://rob-bell.net/2009/06/a-beginners-guide-to-big-o-notation/

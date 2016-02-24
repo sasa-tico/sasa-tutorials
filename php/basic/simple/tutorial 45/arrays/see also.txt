@@ -1,0 +1,1 @@
+POST posibility/registration       (array_map(), list())

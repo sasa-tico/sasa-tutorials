@@ -1,0 +1,100 @@
+package de.hybris.platform.store.web.controllers.forms.registration;
+
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+import javax.validation.metadata.BeanDescriptor;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
+
+import de.hybris.platform.store.web.facades.UserFacade;
+
+@Component("registrationValidator")
+public class RegistrationValidator implements Validator {
+
+	private UserFacade userFacade;
+
+	public void setUserFacade(final UserFacade userFacade) {
+		this.userFacade = userFacade;
+	}
+
+	@Autowired
+	private MessageSource messageSource;
+	public static final String PASSWORD_REGEX = "((?=.*\\d)(?=.*[a-z]).{5,16})";
+
+	public boolean supports(final Class<?> aClass) {
+		return RegistrationInfo.class.equals(aClass);
+	}
+
+	public void validate(final Object object, final Errors errors) {
+
+		LocaleContextHolder.getLocale();
+
+		final RegistrationInfo info = (RegistrationInfo) object;
+		final String firstname = info.getFirstname();
+		final String lastname = info.getLastname();
+		final String password = info.getPassword();
+		final String password2 = info.getPassword2();
+		final String mail = info.getMail();
+
+		if (StringUtils.isEmpty(firstname)) {
+			errors.rejectValue("firstname", "", "empty");
+		}
+		if (StringUtils.isEmpty(lastname)) {
+			errors.rejectValue("lastname", "", "empty");
+		}
+		if (StringUtils.isEmpty(password) || !(Pattern.matches(PASSWORD_REGEX, password))) {
+			errors.rejectValue("password", "", "register.invalid.password");
+		}
+		if (!password.equals(password2)) {
+			errors.rejectValue("password2", "", "register.password.mismatch");
+		}
+		if (StringUtils.isEmpty(mail)) {
+			errors.rejectValue("mail", "empty");
+		}
+		final Pattern pattern1 = Pattern.compile(".+@.+\\.[a-z]+");
+		final Matcher matcher1 = pattern1.matcher(mail);
+		if (!matcher1.matches()) {
+			errors.rejectValue("mail", "register.invalid.email");
+		}
+	}
+
+	@Override
+	public BeanDescriptor getConstraintsForClass(final Class<?> arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T> T unwrap(final Class<T> arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T> Set<ConstraintViolation<T>> validate(final T arg0, final Class<?>... arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T> Set<ConstraintViolation<T>> validateProperty(final T arg0, final String arg1, final Class<?>... arg2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T> Set<ConstraintViolation<T>> validateValue(final Class<T> arg0, final String arg1, final Object arg2,
+	                final Class<?>... arg3) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}

@@ -1,0 +1,23 @@
+package de.hybris.platform.store.web.data;
+
+public class TitleData {
+	String isocode;
+	String name;
+
+	public String getIsocode() {
+		return this.isocode;
+	}
+
+	public void setIsocode(final String isocode) {
+		this.isocode = isocode;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public void setName(final String name) {
+		this.name = name;
+	}
+
+}
