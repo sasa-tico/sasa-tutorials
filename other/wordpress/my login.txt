@@ -1,0 +1,2 @@
+wp-login.php     sasa    developer1
+wp-admin
