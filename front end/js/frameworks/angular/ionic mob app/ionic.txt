@@ -1,0 +1,13 @@
+
+1.install ionic
+http://ionicframework.com/getting-started/
+npm install -g cordova ionic
+
+2.install strt project
+ionic start myApp tabs
+
+3.start project
+cd myApp
+ionic serve
+localhost, select 2
+

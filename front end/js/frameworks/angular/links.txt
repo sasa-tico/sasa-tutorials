@@ -1,7 +1,19 @@
 https://www.youtube.com/watch?v=2eEok752-qc&list=PLkZU2rKh1mT81nK9LgCV8l7kuSr6Xoj2x
 
-
-
-
-
 https://docs.angularjs.org/api/ng/function/angular.element
+
+********firebase**********
+https://www.firebase.com/docs/web/guide/
+https://firebase.google.com/docs/reference/js/firebase.database.Query
+https://firebase.googleblog.com/2013/10/queries-part-1-common-sql-queries.html
+
+
+*********firebase and php************
+http://firebase-php.readthedocs.io/en/latest/
+https://github.com/ktamas77/firebase-php
+
+*********laravel 4.2*************
+https://packagist.org/packages/j42/laravel-firebase
+
+
+
