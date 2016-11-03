@@ -1,0 +1,2 @@
+http://www.pythonforbeginners.com/requests/using-requests-in-python
+http://docs.python-requests.org/en/master/

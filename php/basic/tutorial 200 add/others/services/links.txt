@@ -1,0 +1,2 @@
+https://www.leaseweb.com/labs/2015/10/creating-a-simple-rest-api-in-php/
+http://phppot.com/php/php-restful-web-service/

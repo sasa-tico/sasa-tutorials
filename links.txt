@@ -1,0 +1,67 @@
+https://www.sitepoint.com/comparison-javascript-http-libraries/
+http://andrewhfarmer.com/ajax-libraries/
+
+http://www.top10bestwebsitebuilders.com/how-to-create-a-website/business/best-way-to-build-a-website-infographic
+http://www.nezavisne.com/kultura/film/Ovo-su-najbolji-partizanski-filmovi-koje-ne-smijete-propustiti/311386
+
+http://www.enterprisedb.com/products-services-training/pgdownload
+https://www.mssqltips.com/sqlservertutorial/20/sql-server-backup-database-command/
+
+https://packagist.org/packages/travoltron/laravel-grunt
+
+https://djordjekovacevic.com/articles/compile-assets-with-laravel-elixir-on-laravel-4.2-or-any-other-framework
+
+
+handlebarsjs.com
+
+codepen.io
+https://thepiratebay.bid/browse/503
+
+
+
+
+********webservice****************************
+https://www.youtube.com/watch?v=iqNiINZ4Sxg
+
+/////////soap webservice/////////////////////////
+https://www.youtube.com/watch?v=XHqX24h3Lw8
+https://www.youtube.com/watch?v=ihIBXAW_8Jw
+
+////////restfull webservice////////////////////
+
+https://www.youtube.com/watch?v=mG7hX3hJGh0
+https://www.youtube.com/watch?v=AZbEpsglCSU
+https://www.youtube.com/watch?v=Omk84aS7f8k
+https://www.youtube.com/watch?v=KzFqke8g0aM
+https://www.youtube.com/watch?v=nEsOB2bqo_k
+
+/////////ssh service in linux//////////////////
+https://www.youtube.com/watch?v=0qjMimYLwY0
+
+*************************************************
+
+
+/////////php and mongo db//////////////////////
+https://www.youtube.com/watch?v=gnQaJyuB2yw
+https://www.youtube.com/watch?v=I9h4ZkK1YIM
+https://www.youtube.com/watch?v=WIBa7X5cAZM
+https://www.youtube.com/watch?v=THCiObgXxTg
+
+
+/////////pdf in php////////////////////////////
+https://www.youtube.com/watch?v=Kid6Xrqf9-Y
+https://www.youtube.com/watch?v=HLxnw4Jt_AM
+
+
+/////////angular////////////////////////////////
+https://docs.angularjs.org/api/ng/service/$http
+https://www.youtube.com/watch?v=Z7n2cWCR4Jk
+
+
+
+
+
+
+
+
+

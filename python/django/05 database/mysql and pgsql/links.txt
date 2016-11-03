@@ -1,0 +1,2 @@
+https://www.youtube.com/watch?v=sjM89gKGHTY&list=PLEsfXFp6DpzT5veidCTZ1mQriBX0Mu2LF
+https://docs.djangoproject.com/en/1.10/topics/db/sql/

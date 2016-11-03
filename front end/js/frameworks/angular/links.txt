@@ -6,7 +6,8 @@ https://docs.angularjs.org/api/ng/function/angular.element
 https://www.firebase.com/docs/web/guide/
 https://firebase.google.com/docs/reference/js/firebase.database.Query
 https://firebase.googleblog.com/2013/10/queries-part-1-common-sql-queries.html
-
+https://www.airpair.com/angularjs/posts/build-a-real-time-hybrid-app-with-ionic-firebase
+https://github.com/firebase/angularfire/issues/46
 
 *********firebase and php************
 http://firebase-php.readthedocs.io/en/latest/
